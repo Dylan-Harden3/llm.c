@@ -57,6 +57,7 @@ def convert(filepath, output, push_to_hub=False, out_dtype="bfloat16"):
     H = model_header[5].item() # num heads
     C = model_header[6].item() # channels
     Vp = model_header[7].item() # padded vocab size
+    activation = model_header[8].item() # flag for which activation function
 
     print(f"{version=}, {maxT=}, {V=}, {Vp=}, {L=}, {H=}, {C=}")
 
@@ -72,8 +73,8 @@ def convert(filepath, output, push_to_hub=False, out_dtype="bfloat16"):
         'attprojb': (L, C),
         'ln2w': (L, C),
         'ln2b': (L, C),
-        'fcw': (L, 4 * C, C),
-        'fcb': (L, 4 * C),
+        'fcw': (L, 8 * C, C),
+        'fcb': (L, 8 * C), 
         'fcprojw': (L, C, 4 * C),
         'fcprojb': (L, C),
         'lnfw': (C,),
@@ -125,13 +126,15 @@ def convert(filepath, output, push_to_hub=False, out_dtype="bfloat16"):
                         n_ctx = maxT,
                         n_embd = C,
                         n_layer = L,
-                        n_head = H)
-    model = GPT2LMHeadModel(config)
+                        n_head = H,
+                        n_inner = 8 * C,
+                        activation_function = "silu")
+    model = CustomGPT2LMHeadModel(config)
     if out_dtype == "bfloat16":
         model = model.to(torch.bfloat16)
 
     # Set the model dict and save
-    model.load_state_dict(model_dict)
+    model.load_state_dict(model_dict, strict=False)
     model.save_pretrained(output, max_shard_size="5GB", safe_serialization=True)
 
     # Copy over a standard gpt2 tokenizer
