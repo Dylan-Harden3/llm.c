@@ -15,7 +15,8 @@ Export to a local HF model and also push to your account on Hugging Face:
 import numpy as np
 import torch
 import argparse, sys
-from transformers import GPT2Config, GPT2Tokenizer, GPT2LMHeadModel
+from transformers import GPT2Config, GPT2Tokenizer
+from CustomGPT2Model import CustomGPT2LMHeadModel
 
 # -----------------------------------------------------------------------------
 # Tensor functions for both bfloat16 (from int16) and normal float32
